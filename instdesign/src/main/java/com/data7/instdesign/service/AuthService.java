@@ -62,5 +62,8 @@ public class AuthService {
         return authMapper.findByUserId(userId);
     }
 
+    public boolean deleteToken(String userId) {
+        return authMapper.deleteToken(userId);
 
+    }
 }

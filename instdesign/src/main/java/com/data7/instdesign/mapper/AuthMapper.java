@@ -14,5 +14,5 @@ public interface AuthMapper {
     UserDTO findByUserId(String userId);
     Boolean saveToken(@Param("userId") String userId, @Param("token") String token);
     String findByToken(String token);
-    void deleteToken(String userId);
+    boolean deleteToken(String userId);
 }

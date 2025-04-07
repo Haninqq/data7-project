@@ -95,6 +95,11 @@ public class ApiAuthController {
             session.setAttribute("user", user);
 
             // 3. rememberMe 쿠키 처리
+
+            //먼저 있던 rememberMe Token 삭제
+            authService.deleteToken(user.getUserId());
+
+            //새로운 Token 등록
             if (loginDTO.getRememberMe()) {
                 String token = UUID.randomUUID().toString();
                 boolean tokenSaved = authService.saveToken(user.getUserId(), token);

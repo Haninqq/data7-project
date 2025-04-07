@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultrag.net.nz/thymeleaf/layout"
+      layout:decorate="~{main/index}">
+<head>
+    <meta charset="UTF-8">
+    <title>제목을 입력해주세요</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <style>
+        /* 전체 감싸는 div */
+        #formContainer {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            background-color: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        /* 탭 버튼 */
+        .tab-btn {
+            border: 1px solid #ccc;
+            border-radius: 4px 4px 0 0;
+            font-weight: 500;
+            color: black;
+            background-color: #f9f9f9;
+            padding: 8px 16px;
+        }
+
+        .tab-btn.active {
+            background-color: #3366ff;
+            color: white;
+            border-color: #3366ff;
+        }
+
+        /* 학년 선택 */
+        .btn-check:checked + .btn-outline-primary {
+            background-color: #3366ff;
+            color: white;
+            border-color: #3366ff;
+        }
+
+        .btn-outline-primary {
+            border-radius: 999px !important;
+            padding: 6px 18px;
+            font-weight: 500;
+        }
+
+        /* 과목 및 교수학습단계 버튼 */
+        .btn-outline-secondary {
+            border-radius: 999px !important;
+            padding: 6px 18px;
+            font-weight: 500;
+            color: black;
+            border-color: #ccc;
+            background-color: white;
+        }
+
+        .btn-outline-secondary.active {
+            background-color: #3366ff;
+            color: white;
+            border-color: #3366ff;
+        }
+
+        .form-control::placeholder {
+            color: #bbb;
+        }
+
+        .btn-primary {
+            background-color: #3366ff;
+            border-color: #3366ff;
+        }
+
+        .btn-outline-secondary.reset-btn {
+            border-radius: 999px;
+        }
+
+        .btn-toggle-group button {
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div class="container mt-5">
+
+        <div id="formContainer">
+
+            <!-- 탭 메뉴 -->
+            <div class="mb-4">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn tab-btn active" data-school="E" id="resetFlag">초등학교</button>
+                    <button type="button" class="btn tab-btn" data-school="M">중학교</button>
+                    <button type="button" class="btn tab-btn" data-school="H">고등학교</button>
+                </div>
+            </div>
+
+            <!-- 학년 선택 -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">학년</label>
+                <div class="btn-group" role="group" id="gradeContainer">
+                    <!-- 학년 데이터 들어올 예정-->
+                </div>
+            </div>
+
+            <!-- 과목 선택 -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">과목</label>
+                <div class="btn-toggle-group" id="subjectContainer">
+                    <!-- 여기에 학년별 과목이 들어올 예정-->
+                </div>
+            </div>
+
+            <!-- 교수학습단계 선택 (multiple 선택 가능) -->
+<!--            <div class="mb-3">-->
+<!--                <label class="form-label fw-bold">교수학습단계</label>-->
+<!--                <div class="btn-toggle-group" id="stepContainer">-->
+<!--                    <button type="button" class="btn btn-outline-secondary active">도입</button>-->
+<!--                    <button type="button" class="btn btn-outline-secondary active">전개</button>-->
+<!--                    <button type="button" class="btn btn-outline-secondary active">정리</button>-->
+<!--                </div>-->
+<!--            </div>-->
+
+            <!-- 학습목표 입력 -->
+            <div class="mb-4">
+                <label for="goalInput" class="form-label fw-bold">학습목표를 입력해주세요.</label>
+                <input type="text" class="form-control p-3" id="goalInput" placeholder="예) 기본권의 종류와 내용을 구체적 사례를 통해 설명할 수 있다.">
+            </div>
+
+            <!-- 버튼 -->
+            <div class="d-flex align-items-center gap-3">
+                <button type="button" class="btn btn-primary px-4">찾기</button>
+                <button type="button" class="btn btn-outline-secondary reset-btn" id="reset-button">초기화</button>
+            </div>
+        </div>
+    </div>
+<script th:inline="javascript">
+    // 탭 버튼 단일 선택
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. 기본 선택된 학교급 찾기 (active 클래스 or default index로)
+        const defaultTab = document.querySelector('.tab-btn.active')
+                || document.querySelector('.tab-btn[data-school="M"]'); // fallback
+
+        if (defaultTab) {
+            const school = defaultTab.dataset.school;
+            renderGradeOptions(school); // 학년 버튼 그리기 + 과목 자동 요청까지 포함됨
+        }
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const school = btn.dataset.school; // 'E', 'M', 'H' 중 하나
+            renderGradeOptions(school);        // school에 따라 학년 버튼 HTML 삽입
+        });
+    });
+
+    function bindGradeClickEvent() {
+        document.querySelectorAll('.btn-check').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const gradeCode = btn.dataset.grade;
+
+                const formData = {gradeCode};
+
+                try {
+                    const response = await fetch('/search/api/subject', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(formData),
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        const container = document.getElementById('subjectContainer');
+                        let html = '';
+                        result.data.forEach(subject => {
+                            html += `<button type="button" class="btn btn-outline-secondary">${subject}</button>`;
+                        });
+                        container.innerHTML = html;
+                    } else {
+                        alert(result.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('과목 조회 중 오류 발생.');
+                }
+            });
+        });
+    }
+
+    function renderGradeOptions(school) {
+        const container = document.getElementById('gradeContainer');
+        let html = '';
+
+        switch (school) {
+            case 'E' :
+                html = `
+                    <input type="radio" class="btn-check" name="grade" id="grade1" data-grade="1" checked>
+                    <label class="btn btn-outline-primary" for="grade1">초등1</label>
+
+                    <input type="radio" class="btn-check" name="grade" id="grade2" data-grade="2">
+                    <label class="btn btn-outline-primary" for="grade2">초등2</label>
+
+                    <input type="radio" class="btn-check" name="grade" id="grade3" data-grade="3">
+                    <label class="btn btn-outline-primary" for="grade3">초등3</label>
+
+                    <input type="radio" class="btn-check" name="grade" id="grade4" data-grade="4">
+                    <label class="btn btn-outline-primary" for="grade4">초등4</label>
+
+                    <input type="radio" class="btn-check" name="grade" id="grade5" data-grade="5">
+                    <label class="btn btn-outline-primary" for="grade5">초등5</label>
+
+                    <input type="radio" class="btn-check" name="grade" id="grade6" data-grade="6">
+                    <label class="btn btn-outline-primary" for="grade6">초등6</label>`
+                break;
+            case 'M' :
+                html = `
+                    <input type="radio" class="btn-check" name="grade" id="grade1" data-grade="7" checked>
+                    <label class="btn btn-outline-primary" for="grade1">중등1</label>
+
+                    <input type="radio" class="btn-check" name="grade" id="grade2" data-grade="8">
+                    <label class="btn btn-outline-primary" for="grade2">중등2</label>
+
+                    <input type="radio" class="btn-check" name="grade" id="grade3" data-grade="9">
+                    <label class="btn btn-outline-primary" for="grade3">중등3</label>`
+                break;
+            case 'H' :
+                html = `
+                    <input type="radio" class="btn-check" name="grade" id="grade1" data-grade="10" checked>
+                    <label class="btn btn-outline-primary" for="grade1">고등1</label>
+
+                    <input type="radio" class="btn-check" name="grade" id="grade2" data-grade="11">
+                    <label class="btn btn-outline-primary" for="grade2">고등2</label>
+
+                    <input type="radio" class="btn-check" name="grade" id="grade3" data-grade="12">
+                    <label class="btn btn-outline-primary" for="grade3">고등3</label>`
+                break;
+        }
+
+        container.innerHTML = html;
+        bindGradeClickEvent();
+
+        const checked = document.querySelector('input[name="grade"]:checked');
+        if (checked) {
+            const gradeCode = checked.dataset.grade;
+            requestSubjectByGrade(gradeCode);
+        }
+    }
+
+    async function requestSubjectByGrade(gradeCode) {
+        try {
+            const response = await fetch('/search/api/subject', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({gradeCode}),
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                const container = document.getElementById('subjectContainer');
+                let html = '';
+                result.data.forEach(subject => {
+                    html += `<button type="button" class="btn btn-outline-secondary">${subject}</button>`;
+                });
+                container.innerHTML = html;
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('과목 조회 중 오류 발생.');
+        }
+    }
+
+
+    document.getElementById('subjectContainer').addEventListener('click', e => {
+        if (e.target.matches('button')) {
+            document.querySelectorAll('#subjectContainer .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            e.target.classList.add('active');
+        }
+    });
+
+    // document.getElementById('stepContainer').addEventListener('click', e=> {
+    //    if(e.target.matches('button')) {
+    //        if(e.target.classList.contains('active')){
+    //            e.target.classList.remove('active');
+    //        } else {
+    //            e.target.classList.add('active');
+    //        }
+    //    }
+    // });
+
+    document.getElementById('reset-button').addEventListener('click', () => {
+
+        document.querySelectorAll('#subjectContainer .btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+
+        document.querySelectorAll('.tab-btn').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('input[name="grade"]').forEach(radio => radio.checked = false);
+        document.getElementById('resetFlag').classList.add('active');
+        renderGradeOptions("E");
+        document.getElementById('goalInput').innerText = '';
+        document.getElementById('goalInput').value = '';
+        console.log('초기화 완료');
+    });
+
+
+    //선택사항 없을 시 alert
+    document.getElementById('submitBtn').addEventListener('click', async function () {
+        const activeSchool = document.querySelector('.tab-btn.active');
+        const activeGrade = document.querySelector('.btn-check.active');
+        const activeSubject = document.querySelector('.btn-outline-secondary.active');
+
+        if(!activeSchool) {
+            alert('학교급을 선택해주세요.');
+        }
+        if(!activeGrade){
+            alert('학년을 선택해주세요.');
+        }
+        if(!activeSubject){
+            alert('과목을 선택해주세요.');
+        }
+        if(activeSchool && activeGrade && activeSubject){
+            let formData = {
+                'school': activeSchool.innerText,
+                'grade': activeGrade.dataset.grade,
+                'subject': activeSubject.innerText,
+                'goal': document.getElementById('goalInput').value
+            }
+            try{
+                const result = await fetch('search/api/goal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const response = await result.json();
+
+                if(response.success){
+                    alert(response.body);
+                } else {
+                    alert(response.message);
+                }
+            } catch (error){
+                console.error('Error:', error);
+                alert('학습목표 제출 중 오류가 발생했습니다.');
+            }
+        }
+
+
+    });
+
+
+
+</script>
+</div>
+</body>
+</html>
