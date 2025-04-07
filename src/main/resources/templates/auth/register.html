@@ -107,7 +107,7 @@
                     } else {
                         userIdHelp.className = 'form-text text-danger';
                         userIdHelp.textContent = '이미 사용중인 아이디입니다.';
-
+                        checkFormValidity()
                     }
                 } catch (error) {
                     console.error('Error:', error);
@@ -144,6 +144,7 @@
                         emailHelp.className = 'form-text text-danger';
                         emailHelp.textContent = '이미 사용 중인 이메일입니다.';
                         isEmailChecked = false;
+                        checkFormValidity()
                     } else {
                         emailHelp.className = 'form-text text-success';
                         emailHelp.textContent = '사용 가능한 이메일입니다.';
@@ -167,6 +168,7 @@
                 userIdHelp.className = 'form-text text-danger';
                 userIdHelp.innerText = '아이디는 4~20자의 영문 대소문자와 숫자만 사용 가능합니다.'
                 this.classList.add('is-invalid');
+                checkFormValidity()
             } else {
                 userIdHelp.className = 'form-text text-muted';
                 userIdHelp.innerText = '';
@@ -176,12 +178,13 @@
         });
 
         document.getElementById('password').addEventListener('input', function() {
-            const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+            const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()])[A-Za-z\d!@#$%^&*()]{8,}$/;
             const helpText = this.nextElementSibling;
 
             if (!regex.test(this.value)) {
                 helpText.className = 'form-text text-danger';
                 this.classList.add('is-invalid');
+                checkFormValidity()
             } else {
                 helpText.className = 'form-text text-success';
                 this.classList.remove('is-invalid');
@@ -198,6 +201,7 @@
                 this.classList.add('is-invalid');
                 helpText.className = 'form-text text-danger';
                 helpText.InnerText = '비밀번호와 일치하지 않습니다.';
+                checkFormValidity()
             } else {
                 this.classList.remove('is-invalid');
                 this.classList.add('is-valid');
@@ -213,6 +217,7 @@
             if (!this.value.match(/^[0-9]{10,11}$/)) {
                 helpText.className = 'form-text text-danger';
                 this.classList.add('is-invalid');
+                checkFormValidity()
             } else {
                 helpText.className = 'form-text text-muted';
                 this.classList.remove('is-invalid');
@@ -232,6 +237,7 @@
                 nameHelp.innerText = '이름은 2~20자의 한글, 영문, 공백, 하이픈(-), 따옴표(\')만 사용할 수 있습니다.';
                 nameHelp.className = 'form-text text-danger';
                 this.classList.add('is-invalid');
+                checkFormValidity()
             } else {
                 nameHelp.textContent = '';
                 nameHelp.className = 'form-text text-success';
@@ -257,10 +263,12 @@
         function checkFormValidity() {
             const submitBtn = document.getElementById('submitBtn');
             const form = document.getElementById('registerForm');
+            const hasInvalid = form.querySelectorAll('.is-invalid').length > 0;
+
             const isValid = form.checkValidity() &&
                     isIdChecked &&
                     isEmailChecked &&
-                    !form.querySelector('.is-invalid');
+                    !hasInvalid;
 
             submitBtn.disabled = !isValid;
         }
