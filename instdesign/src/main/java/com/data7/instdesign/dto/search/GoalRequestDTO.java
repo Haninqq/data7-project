@@ -12,7 +12,6 @@ import lombok.extern.log4j.Log4j2;
 @ToString
 @Log4j2
 public class GoalRequestDTO {
-    private String school;
     private String grade;
     private String subject;
     private String goal;

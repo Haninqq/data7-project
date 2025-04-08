@@ -132,7 +132,7 @@
 
             <!-- 버튼 -->
             <div class="d-flex align-items-center gap-3">
-                <button type="button" class="btn btn-primary px-4">찾기</button>
+                <button type="button" class="btn btn-primary px-4" id="submitBtn">찾기</button>
                 <button type="button" class="btn btn-outline-secondary reset-btn" id="reset-button">초기화</button>
             </div>
         </div>
@@ -207,7 +207,7 @@
         switch (school) {
             case 'E' :
                 html = `
-                    <input type="radio" class="btn-check" name="grade" id="grade1" data-grade="1" checked>
+                    <input type="radio" class="btn-check" name="grade" id="grade1" data-grade="1">
                     <label class="btn btn-outline-primary" for="grade1">초등1</label>
 
                     <input type="radio" class="btn-check" name="grade" id="grade2" data-grade="2">
@@ -227,7 +227,7 @@
                 break;
             case 'M' :
                 html = `
-                    <input type="radio" class="btn-check" name="grade" id="grade1" data-grade="7" checked>
+                    <input type="radio" class="btn-check" name="grade" id="grade1" data-grade="7">
                     <label class="btn btn-outline-primary" for="grade1">중등1</label>
 
                     <input type="radio" class="btn-check" name="grade" id="grade2" data-grade="8">
@@ -238,7 +238,7 @@
                 break;
             case 'H' :
                 html = `
-                    <input type="radio" class="btn-check" name="grade" id="grade1" data-grade="10" checked>
+                    <input type="radio" class="btn-check" name="grade" id="grade1" data-grade="10">
                     <label class="btn btn-outline-primary" for="grade1">고등1</label>
 
                     <input type="radio" class="btn-check" name="grade" id="grade2" data-grade="11">
@@ -326,7 +326,13 @@
     //선택사항 없을 시 alert
     document.getElementById('submitBtn').addEventListener('click', async function () {
         const activeSchool = document.querySelector('.tab-btn.active');
-        const activeGrade = document.querySelector('.btn-check.active');
+        const gradeInputs = document.querySelectorAll('.btn-check');
+        let activeGrade = '';
+        gradeInputs.forEach((input) => {
+            if (input.checked) {
+                activeGrade = input.dataset.grade;
+            }
+        });
         const activeSubject = document.querySelector('.btn-outline-secondary.active');
 
         if(!activeSchool) {
@@ -339,12 +345,16 @@
             alert('과목을 선택해주세요.');
         }
         if(activeSchool && activeGrade && activeSubject){
+            console.log('선택한 학년 : ' + activeGrade);
+            console.log('선택한 과목 : ' + activeSubject.innerText);
+            console.log('입력한 학습목표 : ' + document.getElementById('goalInput').value);
+
             let formData = {
-                'school': activeSchool.innerText,
-                'grade': activeGrade.dataset.grade,
+                'grade': activeGrade,
                 'subject': activeSubject.innerText,
                 'goal': document.getElementById('goalInput').value
             }
+
             try{
                 const result = await fetch('search/api/goal', {
                     method: 'POST',
