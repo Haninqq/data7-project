@@ -54,6 +54,19 @@ public class ApiSearchController {
             //여기서 DTO로 받은 값을 Python과 소통해야 함.
             //Python API와 소통 후, 결과값을 다시 View로 쏘아주는 형식.
 
+            // grade parsing
+            String[] gradeMap = {
+                    "초1", "초2", "초3", "초4", "초5", "초6",
+                    "중1", "중2", "중3",
+                    "고1", "고2", "고3"
+            };
+
+            int gradeNum = Integer.parseInt(request.getGrade());
+            if (gradeNum >= 1 && gradeNum <= 12) {
+                request.setGrade(gradeMap[gradeNum - 1]);
+            }
+            log.info("request:{}", request);
+
 
             return null;
         } catch (Exception e) {
