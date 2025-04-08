@@ -3,19 +3,27 @@ package com.data7.instdesign.controller;
 import com.data7.instdesign.dto.ApiResponse;
 import com.data7.instdesign.dto.auth.*;
 import com.data7.instdesign.dto.search.GoalRequestDTO;
+import com.data7.instdesign.dto.search.GoalResponseDTO;
 import com.data7.instdesign.service.AuthService;
 import com.data7.instdesign.service.SearchService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +37,9 @@ import java.util.UUID;
 public class ApiSearchController {
 
     private final SearchService searchService;
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
 
     @PostMapping("/subject")
     public ResponseEntity<ApiResponse<List<String>>> getSubject(@RequestBody Map<String, String> request) {
@@ -48,12 +59,8 @@ public class ApiSearchController {
     }
 
     @PostMapping("/goal")
-    //OpenAI API에서 받은 정보를 어떻게 매핑할 것인지, 이것에 대한 DTO로 Return해줘야 함. 아직 안만들어서 모름
-    public ResponseEntity<ApiResponse<List<?>>> receiveGoalAndResponseAPI(@RequestBody GoalRequestDTO request){
-        try{
-            //여기서 DTO로 받은 값을 Python과 소통해야 함.
-            //Python API와 소통 후, 결과값을 다시 View로 쏘아주는 형식.
-
+    public Mono<ApiResponse<String>> receiveGoalAndResponseAPI(@RequestBody GoalRequestDTO request) {
+        try {
             // grade parsing
             String[] gradeMap = {
                     "초1", "초2", "초3", "초4", "초5", "초6",
@@ -67,12 +74,39 @@ public class ApiSearchController {
             }
             log.info("request:{}", request);
 
+            // FastAPI 서버로 요청 보내기
+            String fastApiUrl = "http://127.0.0.1:8010/submit/";
+            ObjectMapper objectMapper = new ObjectMapper();
+            String json = objectMapper.writeValueAsString(request);
+            log.info("Generated JSON: {}", json);
 
-            return null;
+            // WebClient로 POST 요청
+            WebClient webClient = webClientBuilder.baseUrl(fastApiUrl).build();
+
+            return webClient
+                    .post()
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)  // JSON 헤더 설정
+                    .bodyValue(json)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .map(response -> {
+                        log.info("Response from FastAPI: {}", response);
+                        // 여기서 그냥 Return type에 맞춰서 ObjectMapper쓰면 되는 거 아님?
+                        return ApiResponse.ok(response);
+                    })
+                    .onErrorResume(e -> {
+                        log.error("Error occurred while calling FastAPI: ", e);
+                        return Mono.just(ApiResponse.fail("OpenAI API와의 커넥션 이슈. 다시 시도해주세요."));
+                    });
+
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.fail("OpenAI API 와의 커넥션 이슈. 다시 시도해주세요.(아니면 여기에서 오류별로 message 정의해두는것도 좋을 듯)"));
+            // 여기서 ApiResponse.fail()에 제네릭 타입을 명시
+            return Mono.just(ApiResponse.fail("OpenAI API와의 커넥션 이슈. 다시 시도해주세요."));
         }
     }
+
+
+
 
 
 

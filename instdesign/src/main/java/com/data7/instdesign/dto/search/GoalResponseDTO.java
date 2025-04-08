@@ -11,7 +11,7 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @ToString
 @Log4j2
-public class GoalRequestDTO {
+public class GoalResponseDTO {
     private String grade;
     private String subject;
     private String goal;

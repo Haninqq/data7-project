@@ -53,6 +53,13 @@ dependencies {
 
     // Security
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // WebFlux 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Jackson (JSON 처리)
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
 }
 
 tasks.named('test') {
