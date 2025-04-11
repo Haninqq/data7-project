@@ -10,6 +10,7 @@ from sentence_transformers import SentenceTransformer, util
 # ------------------------------
 app = FastAPI()
 
+
 SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:1234@localhost/instdesign"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"charset": "utf8mb4"})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -116,6 +117,7 @@ def find_similar_adts(user_input: str, adt_items: list, top_n: int = 5):
 def generate_similar_adts(req: RequestData, db: Session = Depends(get_db)):
     adt_items = get_adt_items(db)
     results = find_similar_adts(req.goal.strip(), adt_items)
+    
     return {"results": results}
 
 @app.get("/")
