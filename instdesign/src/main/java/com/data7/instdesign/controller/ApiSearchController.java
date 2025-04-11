@@ -75,7 +75,7 @@ public class ApiSearchController {
             log.info("request:{}", request);
 
             // FastAPI 서버로 요청 보내기
-            String fastApiUrl = "http://127.0.0.1:8010/submit/";
+            String fastApiUrl = "http://127.0.0.1:8000/submit/";
             ObjectMapper objectMapper = new ObjectMapper();
             String json = objectMapper.writeValueAsString(request);
             log.info("Generated JSON: {}", json);
