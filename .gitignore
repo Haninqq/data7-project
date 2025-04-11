@@ -1,0 +1,16 @@
+# gradle build folder
+.gradle/
+
+# java build artifact
+/build/
+
+# ide setting files
+.idea/
+*.iml/
+
+# system files
+.DS_Store
+Thumbs.db
+
+# api key
+.env
