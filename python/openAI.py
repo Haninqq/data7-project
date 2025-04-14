@@ -4,12 +4,18 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sentence_transformers import SentenceTransformer, util
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+import logging
 
 # ------------------------------
 # FastAPI 앱 & DB 설정
 # ------------------------------
 app = FastAPI()
 
+load_dotenv()  
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))  
 
 SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:1234@localhost/instdesign"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"charset": "utf8mb4"})
@@ -37,6 +43,27 @@ class TaxonomyVerbs(Base):
     desc = Column(String(200), nullable=True)
 
     category = relationship("TaxonomyCategory", backref="verbs")
+    tool_adt_maps = relationship("ToolAdtMap", back_populates="taxonomy_verb")
+
+class Tools(Base):
+    __tablename__ = 'tools'
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    description = Column(String(255), nullable=True)
+
+    # tool_adt_map와 관계 설정 (optional)
+    tool_adt_maps = relationship("ToolAdtMap", back_populates="tool")
+
+class ToolAdtMap(Base):
+    __tablename__ = 'tool_adt_map'
+
+    tool_id = Column(Integer, ForeignKey('tools.id'), primary_key=True)
+    verb_id = Column(Integer, ForeignKey('taxonomy_verbs.id'), primary_key=True)
+
+    # 관계 설정
+    tool = relationship("Tools", back_populates="tool_adt_maps")
+    taxonomy_verb = relationship("TaxonomyVerbs", back_populates="tool_adt_maps")
 
 # ------------------------------
 # 요청 데이터 모델
@@ -88,9 +115,34 @@ def get_adt_items(db: Session):
     ]
 
 # ------------------------------
+# ADT기준 tool 가져오기기
+# ------------------------------
+
+def get_tools(db: Session, adt_values: list):
+
+    results = (
+        db.query(
+            Tools.name.label("tool_name"),
+            Tools.description.label("tool_description")
+        )
+        .join(ToolAdtMap, Tools.id == ToolAdtMap.tool_id) 
+        .join(TaxonomyVerbs, TaxonomyVerbs.id == ToolAdtMap.verb_id)  
+        .filter(TaxonomyVerbs.verb_kor.in_(adt_values))  
+        .all()
+    )
+
+    return [
+        {
+            "tool_name": tool_name,
+            "tool_description": tool_description
+        }
+        for tool_name, tool_description in results
+    ]
+
+# ------------------------------
 # 유사도 분석 함수
 # ------------------------------
-def find_similar_adts(user_input: str, adt_items: list, top_n: int = 5):
+def find_similar_adts(user_input: str, adt_items: list, top_n: int = 3):
     adt_texts = [f"{item['verb']} - {item['desc']}" for item in adt_items]
     user_embedding = model.encode(user_input, convert_to_tensor=True)
     adt_embeddings = model.encode(adt_texts, convert_to_tensor=True)
@@ -118,7 +170,51 @@ def generate_similar_adts(req: RequestData, db: Session = Depends(get_db)):
     adt_items = get_adt_items(db)
     results = find_similar_adts(req.goal.strip(), adt_items)
     
-    return {"results": results}
+    adtList = [result["ADT"] for result in results]
+    tools = get_tools(db, adtList) # tool 가져옴
+    logging.info(f"Tools: {tools}")
+
+
+    prompt = f"""
+## Learning Objective:
+"{req.goal}"
+
+## Bloom's Taxonomy Matches:
+Verbs: {results[0]['BloomTaxonomy']}, {results[1]['BloomTaxonomy']}, {results[2]['BloomTaxonomy']}        
+
+ADTs: {results[0]['ADT']}, {results[1]['ADT']}, {results[2]['ADT']}
+
+Descriptions: {results[0]['ADTDesc']}, {results[1]['ADTDesc']}, {results[2]['ADTDesc']} 
+
+## Suggested Tools:{tools}
+
+Design 3 classroom-friendly, cognitively aligned digital learning activities based on the information above.
+
+Each activity must include:
+- Directly reflect the ADT: '{results[0]["ADT"]}' (which means: '{results[0]["ADTDesc"]}')
+- Be engaging, digital-first, and cognitively aligned
+- Use one or more of the suggested tools
+- Use tools that are appropriate for the activity
+- Be unique and thought-provoking, not generic
+- Return the output as JSON
+
+Respond in valid JSON
+"""
+
+    # GPT-4o-mini 호출
+    response = client.responses.create(
+        model="gpt-4o-mini",
+        instructions=f"You are an expert instructional designer for {req.grade} students in the subject of {req.subject}.",
+        input=prompt,
+        temperature=0.7,
+        max_output_tokens=700
+    )
+
+    return response.output_text 
+
+
+    
+    
 
 @app.get("/")
 def root():
