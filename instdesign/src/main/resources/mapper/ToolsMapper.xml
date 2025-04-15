@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.data7.instdesign.mapper.ToolsMapper">
+    <select id="getToolsList" resultType="com.data7.instdesign.dto.tools.ToolsDTO">
+        SELECT id, name, url, description, usageExample FROM tools
+    </select>
+    <select id="getToolById" resultType="com.data7.instdesign.dto.tools.ToolsDTO">
+        SELECT id, name, url, description, usageExample FROM tools
+        WHERE id=#{id}
+    </select>
+    <select id="getRelatedToolsList" resultType="com.data7.instdesign.dto.tools.RelatedToolsDTO">
+        SELECT toolId, relatedToolId FROM related_tools
+        WHERE toolId=#{id}
+    </select>
+    <select id="getYTLinksList" resultType="com.data7.instdesign.dto.tools.YTLinksDTO">
+        SELECT id, toolId, link FROM yt_links
+        WHERE toolId=#{id}
+    </select>
+    <select id="getToolNameById" resultType="java.lang.String">
+        SELECT name FROM tools
+        WHERE id = #{id}
+    </select>
+</mapper>
