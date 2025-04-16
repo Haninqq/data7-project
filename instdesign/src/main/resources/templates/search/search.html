@@ -12,7 +12,6 @@
         /* 전체 감싸는 div */
         #formContainer {
             border: 1px solid #ddd;
-            border-radius: 8px;
             padding: 30px;
             background-color: #fff;
             box-shadow: 0 2px 6px rgba(0,0,0,0.03);
@@ -44,6 +43,7 @@
         .btn-outline-primary {
             border-radius: 999px !important;
             padding: 6px 18px;
+            margin: 0 8px 8px 8px;
             font-weight: 500;
         }
 
@@ -80,6 +80,10 @@
             margin-right: 8px;
             margin-bottom: 8px;
         }
+        body {
+             font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+             background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body>
@@ -87,20 +91,20 @@
 
     <div class="container mt-5">
 
-        <div id="formContainer">
 
-            <!-- 탭 메뉴 -->
-            <div class="mb-4">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn tab-btn active" data-school="E" id="resetFlag">초등학교</button>
-                    <button type="button" class="btn tab-btn" data-school="M">중학교</button>
-                    <button type="button" class="btn tab-btn" data-school="H">고등학교</button>
-                </div>
+        <!-- 탭 메뉴 -->
+        <div class="mb-0">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn tab-btn active" data-school="E" id="resetFlag">초등학교</button>
+                <button type="button" class="btn tab-btn" data-school="M">중학교</button>
+                <button type="button" class="btn tab-btn" data-school="H">고등학교</button>
             </div>
+        </div>
+        <div id="formContainer">
 
             <!-- 학년 선택 -->
             <div class="mb-3">
-                <label class="form-label fw-bold">학년</label>
+                <label class="form-label fw-bold">학년</label><br>
                 <div class="btn-group" role="group" id="gradeContainer">
                     <!-- 학년 데이터 들어올 예정-->
                 </div>
@@ -114,16 +118,6 @@
                 </div>
             </div>
 
-            <!-- 교수학습단계 선택 (multiple 선택 가능) -->
-<!--            <div class="mb-3">-->
-<!--                <label class="form-label fw-bold">교수학습단계</label>-->
-<!--                <div class="btn-toggle-group" id="stepContainer">-->
-<!--                    <button type="button" class="btn btn-outline-secondary active">도입</button>-->
-<!--                    <button type="button" class="btn btn-outline-secondary active">전개</button>-->
-<!--                    <button type="button" class="btn btn-outline-secondary active">정리</button>-->
-<!--                </div>-->
-<!--            </div>-->
-
             <!-- 학습목표 입력 -->
             <div class="mb-4">
                 <label for="goalInput" class="form-label fw-bold">학습목표를 입력해주세요.</label>
@@ -131,7 +125,7 @@
             </div>
 
             <!-- 버튼 -->
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex justify-content-end align-items-center gap-3">
                 <button type="button" class="btn btn-primary px-4" id="submitBtn">찾기</button>
                 <button type="button" class="btn btn-outline-secondary reset-btn" id="reset-button">초기화</button>
             </div>
@@ -319,6 +313,7 @@
         renderGradeOptions("E");
         document.getElementById('goalInput').innerText = '';
         document.getElementById('goalInput').value = '';
+        document.getElementById('subjectContainer').innerHTML = '';
         console.log('초기화 완료');
     });
 

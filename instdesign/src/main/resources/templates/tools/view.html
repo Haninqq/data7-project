@@ -34,14 +34,20 @@
             </div>
 
             <!-- 이름 & 설명 (오른쪽) -->
-            <div class="col-md-9 d-flex flex-column justify-content-center" style="height: 150px;">
+            <div class="col-md-9 d-flex flex-column justify-content-center" style="height: 150px; position: relative;">
+
+                <!-- 오른쪽 상단에 버튼 -->
+                <a href="/tools/list" class="btn btn-sm btn-outline-secondary position-absolute end-0 top-0">
+                    목록으로
+                </a>
+
                 <h2 class="fw-bold" th:text="${tool.name}">툴 이름</h2>
                 <p class="lead mb-0" th:text="${tool.description}">툴 설명</p>
             </div>
         </div>
 
         <hr>
-        <p>사용 방법 youtube</p>
+        <p>사용 방법 : YouTube</p>
         <!-- YouTube 영상 영역 -->
         <div class="row mb-4">
             <div class="col-md-4 mb-3" th:each="link : ${tool.youtubeLinks}">

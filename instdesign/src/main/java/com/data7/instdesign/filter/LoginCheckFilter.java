@@ -2,20 +2,19 @@ package com.data7.instdesign.filter;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
-import org.springframework.stereotype.Component;
-import org.springframework.web.util.WebUtils;
-
 import java.io.IOException;
 import java.util.List;
 
 public class LoginCheckFilter implements Filter {
 
-    // 로그인 없이 접근 가능한 경로들 (정적 자원, 로그인, 회원가입 등)
-    private static final List<String> whiteList = List.of(
-            "/auth/login",
-            "/auth/register",
-            "/auth/api/",
-            "/css/", "/js/", "/images/", "/favicon.ico", "/logo/"
+    // 정확히 일치해야 통과되는 URI들
+    private static final List<String> exactMatchList = List.of(
+            "/", "/auth/login", "/auth/register", "/favicon.ico"
+    );
+
+    // 이 경로들로 시작하면 통과되는 URI들
+    private static final List<String> prefixMatchList = List.of(
+            "/auth/api/", "/css/", "/js/", "/image/", "/logo/", "/tools/"
     );
 
     @Override
@@ -28,9 +27,18 @@ public class LoginCheckFilter implements Filter {
 
         String uri = httpReq.getRequestURI();
 
-        boolean isLoginRequired = whiteList.stream().noneMatch(uri::startsWith);
+        if (uri.equals("/search")) {
+            // 특정 URL로 접근한 경우
+            session.setAttribute("redirectURI", uri);
+        }
 
-        if (isLoginRequired && (session == null || session.getAttribute("user") == null)) {
+        boolean isWhite =
+                exactMatchList.contains(uri) ||
+                        prefixMatchList.stream().anyMatch(uri::startsWith);
+
+        boolean isLoggedIn = session != null && session.getAttribute("user") != null;
+
+        if (!isWhite && !isLoggedIn) {
             httpRes.sendRedirect("/auth/login");
             return;
         }
