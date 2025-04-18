@@ -75,7 +75,7 @@ public class ApiSearchController {
             log.info("request:{}", request);
 
             // FastAPI 서버로 요청 보내기
-            String fastApiUrl = "http://127.0.0.1:8000/submit/";
+            String fastApiUrl = "http://127.0.0.1:8000/submit/"; //배포 시 링크 바꾸기.
             ObjectMapper objectMapper = new ObjectMapper();
             String json = objectMapper.writeValueAsString(request);
             log.info("Generated JSON: {}", json);
@@ -92,6 +92,7 @@ public class ApiSearchController {
                     .map(response -> {
                         log.info("Response from FastAPI: {}", response);
                         // 여기서 그냥 Return type에 맞춰서 ObjectMapper쓰면 되는 거 아님?
+
                         return ApiResponse.ok(response);
                     })
                     .onErrorResume(e -> {

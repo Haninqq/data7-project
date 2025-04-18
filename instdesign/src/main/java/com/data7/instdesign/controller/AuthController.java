@@ -3,6 +3,7 @@ package com.data7.instdesign.controller;
 import com.data7.instdesign.dto.auth.UserDTO;
 import com.data7.instdesign.service.AuthService;
 import com.data7.instdesign.util.JSFunc;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -53,10 +54,18 @@ public class AuthController {
             user = (UserDTO) session.getAttribute("user");
             userId = user.getUserId();
         }
+        session.invalidate();
+        Cookie cookie = new Cookie("rememberMe", null);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
+        Cookie cookie1 = new Cookie("JSESSIONID", null);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie1);
         boolean flag = authService.deleteToken(userId);
-        if(flag){
-            session.invalidate();
-        } else {
+        if(!flag){
             JSFunc.alert("로그아웃 실패",response);
         }
         return "redirect:/";

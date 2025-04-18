@@ -28,7 +28,9 @@ public class LoginCheckFilter implements Filter {
         String uri = httpReq.getRequestURI();
 
         if (uri.equals("/search")) {
-            // 특정 URL로 접근한 경우
+            if (session == null) {
+                session = httpReq.getSession(true); // 필요할 때만 생성
+            }
             session.setAttribute("redirectURI", uri);
         }
 
