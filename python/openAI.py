@@ -167,49 +167,93 @@ def find_similar_adts(user_input: str, adt_items: list, top_n: int = 3):
 # ------------------------------
 @app.post("/submit/")
 def generate_similar_adts(req: RequestData, db: Session = Depends(get_db)):
+
+
+        # 임시 데이터
+    # goal = "동물의 생식 과정을 이해하고, 수정과 발생의 원리를 설명할 수 있다.";
+    # subject = "과학";
+    # grade = "고1";
+    # tools = ["Canva", "Padlet"]
+    # results = [
+    #     {'BloomTaxonomy': 'Understanding', 'ADT': '예증하기', 'ADTDesc': '예시를 통해 개념을 구체화하는 활동'},
+    #     {'BloomTaxonomy': 'Applying', 'ADT': '사용하기', 'ADTDesc': '적절한 도구나 개념을 실제 상황에 적용하는 활동'},
+    #     {'BloomTaxonomy': 'Analyzing', 'ADT': '구분하기', 'ADTDesc': '요소를 분리하고 비교하는 활동'}
+    # ]
+    # content = {
+    #     'topic': '생식',
+    #     'subtitle': '동물의 생식 세포와 수정 과정을 알아보자',
+    #     'title': '동물의 수정과 발생',
+    #     'url': 'https://www.edunet.net/contsMvGllry/view/154/18573'
+    # }
+#     prompt = f"""
+# Use a decision tree to explore the best activity options.
+
+# Start from: Learning goal → ADT → Tool → Content  
+# Then generate 3 final activities and return them in JSON.
+
+# All values in the JSON must be written in Korean.
+
+# ## Subject: {subject}
+# ## Grade: {grade}
+# ## Learning Objective: {goal}
+# ## ADT: {results[0]['ADT']} ({results[0]['ADTDesc']})
+# ## Tools: {tools}
+# ## Content: {content['title']} ({content['url']})
+# """
+
+
+
+
+
+
+
+
     adt_items = get_adt_items(db)
     results = find_similar_adts(req.goal.strip(), adt_items)
     
     adtList = [result["ADT"] for result in results]
     tools = get_tools(db, adtList) # tool 가져옴
-    logging.info(f"Tools: {tools}")
 
 
     prompt = f"""
-## Learning Objective:
-"{req.goal}"
+You must always use the following instructional context when generating learning activities.
 
-## Bloom's Taxonomy Matches:
-Verbs: {results[0]['BloomTaxonomy']}, {results[1]['BloomTaxonomy']}, {results[2]['BloomTaxonomy']}        
+### Instructional Info:
+- Subject: {req.subject}
+- Grade: {req.grade}
+- Learning Objective: {req.goal}
 
-ADTs: {results[0]['ADT']}, {results[1]['ADT']}, {results[2]['ADT']}
+### Cognitive Elements:
+- Bloom Levels: {results[0]['BloomTaxonomy']}, {results[1]['BloomTaxonomy']}, {results[2]['BloomTaxonomy']}
+- ADT_kor: {results[0]['ADT']}, {results[1]['ADT']}, {results[2]['ADT']}
+- ADT_desc: {results[0]['ADTDesc']}, {results[1]['ADTDesc']}, {results[2]['ADTDesc']}
 
-Descriptions: {results[0]['ADTDesc']}, {results[1]['ADTDesc']}, {results[2]['ADTDesc']} 
+### Tool List: {tools}
 
-## Suggested Tools:{tools}
+Always return output in the following format:
 
-Design 3 classroom-friendly, cognitively aligned digital learning activities based on the information above.
+### Output Format (in Korean):
+[{{
+    "activity_title": "",
+    "tool_name": "",
+    "activity_desc": "",
+    "activity_sentence": "[tool_name]을 활용하여 [activity_title]을 해본다."
+}},
+...
+]
 
-Each activity must include:
-- Directly reflect the ADT: '{results[0]["ADT"]}' (which means: '{results[0]["ADTDesc"]}')
-- Be engaging, digital-first, and cognitively aligned
-- Use one or more of the suggested tools
-- Use tools that are appropriate for the activity
-- Be unique and thought-provoking, not generic
-- Return the output as JSON
 
-Respond in valid JSON
 """
 
     # GPT-4o-mini 호출
     response = client.responses.create(
-        model="gpt-4o-mini",
-        instructions=f"You are an expert instructional designer for {req.grade} students in the subject of {req.subject}.",
+        model="gpt-4.1-mini",
         input=prompt,
-        temperature=0.7,
-        max_output_tokens=700
+        temperature=1,
+        max_output_tokens=2048,
+        top_p=1
     )
-
+    logging.info(f"Response: {response.output_text}")
     return response.output_text 
 
 
