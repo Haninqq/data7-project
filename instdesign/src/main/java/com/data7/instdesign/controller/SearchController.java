@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +24,9 @@ public class SearchController {
     private final SearchService searchService;
 
     @GetMapping("")
-    public String searchPage( HttpServletRequest request) {
+    public String searchPage( HttpServletRequest request, Model model) {
+
+        model.addAttribute("tools", searchService.getTools());
         return "search/search";
     }
 
