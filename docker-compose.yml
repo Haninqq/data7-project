@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  mariadb:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: instdesign
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./dbdata:/var/lib/mysql
+
+  springboot-app:
+    build:
+      context: ./instdesign
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mariadb
+
+  fastapi-app:
+    build:
+      context: ./python
+    ports:
+      - "8000:8000"
