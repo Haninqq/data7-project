@@ -10,4 +10,22 @@
         SELECT id, name
         FROM tools
     </select>
+    <insert id="saveGoal">
+        INSERT INTO saved_goal (userId, goal, subject, grade)
+        VALUES (#{userId}, #{goal}, #{subject}, #{grade})
+    </insert>
+    <insert id="saveContent">
+        INSERT INTO saved_contents (goalId, topic, title, subtitle, url, similarity)
+        VALUES (#{goalId}, #{topic}, #{title}, #{subtitle}, #{url}, #{similarity})
+    </insert>
+    <insert id="saveActivity">
+        INSERT INTO saved_activities (goalId, toolId, toolName, activitySentence, activityDesc)
+        VALUES (#{goalId}, #{toolId}, #{toolName}, #{activitySentence}, #{activityDesc})
+    </insert>
+    <select id="lastId" resultType="java.lang.String">
+        SELECT id FROM saved_goal
+        WHERE userId = #{userId}
+        ORDER BY id DESC
+        LIMIT 1;
+    </select>
 </mapper>

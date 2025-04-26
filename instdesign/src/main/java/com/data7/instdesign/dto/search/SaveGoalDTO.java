@@ -11,11 +11,9 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @ToString
 @Log4j2
-public class ContentResponseDTO {
-    private String topic;
-    private String subtitle;
-    private String title;
-    private String url;
-    private Float similarity;
-    private String message;
+public class SaveGoalDTO {
+    private String grade;
+    private String subject;
+    private String goal;
+    private String userId;
 }

@@ -15,5 +15,5 @@ import java.util.List;
 @Log4j2
 public class PythonResponseDTO {
     private List<OpenAIResponseDTO> gptResults;
-    private ContentResponseDTO contentResults;
+    private List<ContentResponseDTO> contentResults;
 }

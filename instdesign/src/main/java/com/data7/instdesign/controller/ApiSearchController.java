@@ -2,9 +2,7 @@ package com.data7.instdesign.controller;
 
 import com.data7.instdesign.dto.ApiResponse;
 import com.data7.instdesign.dto.auth.*;
-import com.data7.instdesign.dto.search.GoalRequestDTO;
-import com.data7.instdesign.dto.search.GoalResponseDTO;
-import com.data7.instdesign.dto.search.OpenAIResponseDTO;
+import com.data7.instdesign.dto.search.*;
 import com.data7.instdesign.service.AuthService;
 import com.data7.instdesign.service.SearchService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,10 +18,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.web.webauthn.api.PublicKeyCose;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -61,9 +57,8 @@ public class ApiSearchController {
     }
 
     @PostMapping("/goal")
-    public Mono<ApiResponse<List<OpenAIResponseDTO>>> receiveGoalAndResponseAPI(@RequestBody GoalRequestDTO request) {
+    public Mono<ApiResponse<PythonResponseDTO>> receiveGoalAndResponseAPI(@RequestBody GoalRequestDTO request) {
         try {
-            // 학년 코드 파싱
             String[] gradeMap = {
                     "초1", "초2", "초3", "초4", "초5", "초6",
                     "중1", "중2", "중3",
@@ -76,13 +71,11 @@ public class ApiSearchController {
             }
             log.info("request: {}", request);
 
-            // FastAPI 서버로 요청 보낼 준비
             String fastApiUrl = "http://127.0.0.1:8000/submit/";
             ObjectMapper objectMapper = new ObjectMapper();
             String json = objectMapper.writeValueAsString(request);
             log.info("Generated JSON: {}", json);
 
-            // WebClient 구성 및 요청
             WebClient webClient = webClientBuilder.baseUrl(fastApiUrl).build();
 
             return webClient
@@ -90,10 +83,13 @@ public class ApiSearchController {
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .bodyValue(json)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<OpenAIResponseDTO>>() {})
-                    .map(responseList -> {
-                        log.info("FastAPI 응답 수신 완료. 결과 수: {}", responseList.size());
-                        return ApiResponse.ok(responseList);  // ApiResponse<List<OpenAIResponseDTO>>
+                    .bodyToMono(PythonResponseDTO.class)
+                    .map(response -> {
+                        log.info("FastAPI 응답 수신 완료. GPT 결과 수: {}, Content 결과 수: {}, content : {}",
+                                response.getGptResults() != null ? response.getGptResults().size() : 0,
+                                response.getContentResults() != null ? response.getContentResults().size() : 0,
+                                response.getContentResults());
+                        return ApiResponse.ok(response);  // ApiResponse<CombinedResponseDTO>
                     })
                     .onErrorResume(e -> {
                         log.error("FastAPI 호출 중 예외 발생: ", e);
@@ -106,6 +102,65 @@ public class ApiSearchController {
         }
     }
 
+    @PostMapping("/save/goal")
+    public ResponseEntity<ApiResponse<String>> saveGoal(@RequestBody SaveGoalDTO saveGoalDTO, HttpSession session) {
+        try {
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            saveGoalDTO.setUserId(user.getUserId());
+            boolean flag = searchService.saveGoal(saveGoalDTO);
+            if(flag){
+                return ResponseEntity.ok(ApiResponse.ok("학습목표 저장 성공"));
+            } else {
+                return ResponseEntity.badRequest().body(ApiResponse.fail("학습목표 저장 실패"));
+            }
+        } catch(Exception e){
+            log.error("학습목표 저장 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("서버 내부 오류가 발생했습니다"));
+        }
+    }
+    @GetMapping("/getGoalId")
+    public ResponseEntity<ApiResponse<String>> getGoalId(HttpSession session){
+        try{
+            String id = searchService.lastId(session);
+            return ResponseEntity.ok(ApiResponse.ok(id));
+        } catch (Exception e){
+            log.error("id조회 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("서버 내부 오류가 발생했습니다"));
+        }
+    }
+
+    @PostMapping("/save/activity")
+    public ResponseEntity<ApiResponse<String>> saveActivity(@RequestBody SaveActivityDTO saveActivityDTO) {
+        try {
+            boolean flag = searchService.saveActivity(saveActivityDTO);
+            if(flag){
+                return ResponseEntity.ok(ApiResponse.ok("활동 저장 성공"));
+            } else {
+                return ResponseEntity.badRequest().body(ApiResponse.fail("활동 저장 실패"));
+            }
+        } catch(Exception e){
+            log.error("활동 저장 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("서버 내부 오류가 발생했습니다"));
+        }
+    }
+    @PostMapping("/save/content")
+    public ResponseEntity<ApiResponse<String>> saveContent(@RequestBody SaveContentDTO saveContentDTO) {
+        try {
+            boolean flag = searchService.saveContent(saveContentDTO);
+            if(flag){
+                return ResponseEntity.ok(ApiResponse.ok("콘텐츠 저장 성공"));
+            } else {
+                return ResponseEntity.badRequest().body(ApiResponse.fail("콘텐츠 저장 실패"));
+            }
+        } catch(Exception e){
+            log.error("콘텐츠 저장 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("서버 내부 오류가 발생했습니다"));
+        }
+    }
 
 
 

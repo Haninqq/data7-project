@@ -13,6 +13,14 @@
             font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
             background-color: #f8f9fa;
         }
+        .card {
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(0px);
+            box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        }
     </style>
 </head>
 <body>
@@ -34,19 +42,21 @@
             </div>
         </div>
 
-        <!-- 활동 요약 -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-title">추천 받은 툴</h6>
-                    </div>
-                </div>
+        <!-- 활동 요약 (saved_goal 카드 나열) -->
+        <div class="row mb-4" id="savedGoalsContainer">
+            <div class="col-12">
+                <h4 class="fw-bold mb-3">저장한 학습 목표</h4>
             </div>
-            <div class="col-md-4">
-                <div class="card text-center">
+
+            <!-- saved_goal을 반복 렌더링 -->
+            <div class="col-12" th:each="goal : ${saved_goal}">
+                <div class="card mb-3 shadow-sm rounded-4" style="cursor:pointer;" th:onclick="'location.href=\'/search/view/' + ${goal.id} + '\''">
                     <div class="card-body">
-                        <h6 class="card-title">최근 검색</h6>
+                        <h6 class="card-subtitle mb-2 text-muted">학습 목표</h6>
+                        <h5 class="card-title" th:text="${goal.learningObjective}">여기에 학습 목표 문장이 들어갑니다.</h5>
+                        <div class="text-end mt-2">
+                            <small class="text-muted" th:text="${#dates.format(goal.createdAt, 'yyyy-MM-dd')}">2024-04-30</small>
+                        </div>
                     </div>
                 </div>
             </div>
