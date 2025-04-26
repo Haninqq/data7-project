@@ -1,23 +1,16 @@
-# ===== Java/Spring 관련 =====
-/instdesign/target/
-*.log
-*.class
-*.jar
+# gradle build folder
+.gradle/
 
-# ===== Python 관련 =====
-__pycache__/
-*.pyc
-*.pyo
-*.pkl
-*.sqlite3
-/python/.venv/
-.python-version
+# java build artifact
+/build/
 
-# ===== 공통 환경파일 =====
-.env
-*.env
-
-# ===== IDE/에디터 관련 =====
-.vscode/
+# ide setting files
 .idea/
-*.iml
+*.iml/
+
+# system files
+.DS_Store
+Thumbs.db
+
+# api key
+.env
