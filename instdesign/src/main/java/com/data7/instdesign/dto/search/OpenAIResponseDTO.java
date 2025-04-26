@@ -11,8 +11,9 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @ToString
 @Log4j2
-public class GoalResponseDTO {
-    private String grade;
-    private String subject;
-    private String goal;
+public class OpenAIResponseDTO {
+    private String activity_title;
+    private String tool_name;
+    private String activity_desc;
+    private String activity_sentence;
 }

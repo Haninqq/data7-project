@@ -11,9 +11,11 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @ToString
 @Log4j2
-public class OpenAIResponseDTO {
-    private String activity_title;
-    private String tool_name;
-    private String activity_desc;
-    private String activity_sentence;
+public class ContentResponseDTO {
+    private String topic;
+    private String subtitle;
+    private String title;
+    private String url;
+    private Integer similarity;
+    private String message;
 }

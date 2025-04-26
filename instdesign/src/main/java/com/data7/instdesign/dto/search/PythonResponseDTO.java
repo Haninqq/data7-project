@@ -6,14 +6,14 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
 @Log4j2
-public class OpenAIResponseDTO {
-    private String activity_title;
-    private String tool_name;
-    private String activity_desc;
-    private String activity_sentence;
+public class PythonResponseDTO {
+    private List<OpenAIResponseDTO> gptResults;
+    private ContentResponseDTO contentResults;
 }

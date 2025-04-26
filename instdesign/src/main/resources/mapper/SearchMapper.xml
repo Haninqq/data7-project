@@ -6,4 +6,8 @@
         SELECT subject FROM subject
         WHERE gradecode = #{gradeCode}
     </select>
+    <select id="getTools" resultType="com.data7.instdesign.dto.tools.ToolsDTO">
+        SELECT id, name
+        FROM tools
+    </select>
 </mapper>
