@@ -85,10 +85,11 @@ public class ApiSearchController {
                     .retrieve()
                     .bodyToMono(PythonResponseDTO.class)
                     .map(response -> {
-                        log.info("FastAPI 응답 수신 완료. GPT 결과 수: {}, Content 결과 수: {}, content : {}",
+                        log.info("FastAPI 응답 수신 완료. GPT 결과 수: {}, Content 결과 수: {}, content : {}, gptResult : {}",
                                 response.getGptResults() != null ? response.getGptResults().size() : 0,
                                 response.getContentResults() != null ? response.getContentResults().size() : 0,
-                                response.getContentResults());
+                                response.getContentResults(),
+                                response.getGptResults());
                         return ApiResponse.ok(response);  // ApiResponse<CombinedResponseDTO>
                     })
                     .onErrorResume(e -> {

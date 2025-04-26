@@ -16,7 +16,33 @@ import java.util.List;
 public class MypageService {
     private final MypageMapper mypageMapper;
 
-    public List<SavedGoalsDTO> getGoals(String userId){
-        return mypageMapper.getGoals(userId);
+    public List<SavedGoalsDTO> getGoals(String userId) {
+        List<SavedGoalsDTO> goals = mypageMapper.getGoals(userId);
+
+        for (SavedGoalsDTO goal : goals) {
+            int gradeNumber = Integer.parseInt(goal.getGrade());
+            String gradeText = mapGradeToText(gradeNumber);
+            goal.setGrade(gradeText);
+        }
+
+        return goals;
+    }
+
+    private String mapGradeToText(int grade) {
+        return switch (grade) {
+            case 1 -> "초1";
+            case 2 -> "초2";
+            case 3 -> "초3";
+            case 4 -> "초4";
+            case 5 -> "초5";
+            case 6 -> "초6";
+            case 7 -> "중1";
+            case 8 -> "중2";
+            case 9 -> "중3";
+            case 10 -> "고1";
+            case 11 -> "고2";
+            case 12 -> "고3";
+            default -> "알 수 없음";
+        };
     }
 }

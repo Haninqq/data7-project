@@ -5,5 +5,6 @@
     <select id="getGoals" resultType="com.data7.instdesign.dto.mypage.SavedGoalsDTO">
         SELECT * FROM saved_goal
         WHERE userId = #{userId}
+        ORDER BY createdAt desc
     </select>
 </mapper>

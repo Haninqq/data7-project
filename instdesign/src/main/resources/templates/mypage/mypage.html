@@ -21,6 +21,37 @@
             transform: translateY(0px);
             box-shadow: 0 0 0 rgba(0, 0, 0, 0);
         }
+         #savedGoalsContainer {
+             scroll-behavior: smooth;
+         }
+        #savedGoalsContainer .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        .text-ellipsis {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+         .shadow-left,
+         .shadow-right {
+             position: absolute;
+             top: 0;
+             width: 30px;
+             height: 100%;
+             z-index: 5;
+             pointer-events: none;
+         }
+
+        .shadow-left {
+            left: 0;
+            background: linear-gradient(to right, rgba(0, 0, 0, 0.01), transparent);
+        }
+
+        .shadow-right {
+            right: 0;
+            background: linear-gradient(to left, rgba(0, 0, 0, 0.01), transparent);
+        }
     </style>
 </head>
 <body>
@@ -43,24 +74,37 @@
         </div>
 
         <!-- 활동 요약 (saved_goal 카드 나열) -->
-        <div class="row mb-4" id="savedGoalsContainer">
-            <div class="col-12">
+        <div class="container my-5">
+            <div class="mb-4">
                 <h4 class="fw-bold mb-3">저장한 학습 목표</h4>
             </div>
-
-            <!-- saved_goal을 반복 렌더링 -->
-            <div class="col-12" th:each="goal : ${saved_goal}">
-                <div class="card mb-3 shadow-sm rounded-4" style="cursor:pointer;" th:onclick="'location.href=\'/search/view/' + ${goal.id} + '\''">
-                    <div class="card-body">
-                        <h6 class="card-subtitle mb-2 text-muted">학습 목표</h6>
-                        <h5 class="card-title" th:text="${goal.learningObjective}">여기에 학습 목표 문장이 들어갑니다.</h5>
-                        <div class="text-end mt-2">
-                            <small class="text-muted" th:text="${#dates.format(goal.createdAt, 'yyyy-MM-dd')}">2024-04-30</small>
+            <div class="position-relative">
+                <div id="savedGoalsContainer" class="d-flex overflow-auto py-4 px-2" style="white-space: nowrap; gap: 1rem;">
+                    <div class="card shadow rounded-4 me-4 h-100"
+                         th:each="list : ${goalsList}"
+                         th:onclick="|location.href='/mypage/results/' + ${list.id}|"
+                         style="min-width: 20rem; cursor: pointer; transition: transform 0.2s;">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-muted">학습 목표</h6>
+                                <h5 class="card-title mb-2 text-ellipsis" th:text="${list.goal}">학습 목표 문구</h5>
+                                <div class="badge-container mb-2">
+                                    <span class="badge bg-primary me-1" th:text="${list.grade}">학년</span>
+                                    <span class="badge bg-success" th:text="${list.subject}">과목</span>
+                                </div>
+                            </div>
+                            <div class="text-end mt-3">
+                                <small class="text-muted" th:text="${#dates.format(list.createdAt, 'yyyy-MM-dd')}">2024-04-30</small>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <div class="shadow-left"></div>
+                <div class="shadow-right"></div>
             </div>
+
         </div>
+
 
         <!-- 계정 관리 메뉴 -->
         <div class="list-group">
