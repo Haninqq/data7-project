@@ -175,7 +175,6 @@ def get_adt_items(db: Session):
 # ------------------------------
 
 def get_tools(db: Session, adt_values: list):
-
     results = (
         db.query(
             Tools.name.label("tool_name"),
@@ -187,13 +186,21 @@ def get_tools(db: Session, adt_values: list):
         .all()
     )
 
+    # tool_name 기준으로 중복 제거 (가장 먼저 나온 걸 채택)
+    tool_dict = {}
+    for tool_name, tool_description in results:
+        if tool_name not in tool_dict:
+            tool_dict[tool_name] = tool_description
+
+    # dict를 리스트로 변환
     return [
         {
             "tool_name": tool_name,
             "tool_description": tool_description
         }
-        for tool_name, tool_description in results
+        for tool_name, tool_description in tool_dict.items()
     ]
+
 # ------------------------------
 # 콘텐츠 유사도 분석 함수
 # ------------------------------
@@ -306,7 +313,7 @@ def generate_similar_adts(req: RequestData, db: Session = Depends(get_db)):
     
     adtList = [result["ADT"] for result in results]
     tools = get_tools(db, adtList) # tool 가져옴
-
+    print("tools", tools)
     contentResults = recommend_learning_content(req.goal.strip(), req.subject, model, content_df, content_embeddings)
 
 
@@ -342,7 +349,7 @@ Always return output in the following format:
 
     # GPT-4o-mini 호출
     response = client.responses.create(
-        model="gpt-4.1-mini",
+        model="gpt-4.1",
         input=prompt,
         temperature=1,
         max_output_tokens=2048,
