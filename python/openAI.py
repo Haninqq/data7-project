@@ -8,19 +8,69 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import logging
+import json
+from fastapi.responses import JSONResponse
+import pandas as pd
+from contextlib import asynccontextmanager
+
 
 # ------------------------------
-# FastAPI 앱 & DB 설정
+# FastAPI 앱 & DB 설정 & SBERT 모델 로딩
 # ------------------------------
-app = FastAPI()
 
+app = None
+# 전역변수 선언 
+content_df = None
+content_embeddings = None
+# SBERT 모델 로딩
+model = None
+
+# OpenAI API 키 로딩
 load_dotenv()  
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))  
 
+# DB 설정
 SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:1234@localhost/instdesign"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"charset": "utf8mb4"})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+# Lifespan 설정
+@asynccontextmanager
+async def lifespan(app):
+    global model, content_df, content_embeddings
+
+    print("🚀 모델 및 콘텐츠 로딩 중...")
+    model = SentenceTransformer('snunlp/KR-SBERT-V40K-klueNLI-augSTS')
+
+    # ✅ 여기서 직접 DB 세션 생성
+    db = SessionLocal()
+    try:
+        rows = db.query(Content).all()
+        content_df = pd.DataFrame([{
+            "id": row.id,
+            "subject": row.subject,
+            "topic": row.topic,
+            "subtitle": row.subtitle,
+            "title": row.title,
+            "keywords": row.keywords,
+            "url": row.url
+        } for row in rows])
+
+        content_keywords = content_df["keywords"].astype(str).fillna("").tolist()
+        content_embeddings = model.encode(content_keywords, convert_to_tensor=True)
+
+        print("✅ 콘텐츠 로딩 및 임베딩 완료")
+
+        yield  # 여기까지 오면 서버 시작됨
+
+    finally:
+        db.close()  # ✅ 꼭 세션 닫아주기
+        print("🛑 DB 세션 종료")
+
+
+# 앱 선언부에서 lifespan 등록
+app = FastAPI(lifespan=lifespan)
 
 # ------------------------------
 # DB 모델 정의
@@ -65,8 +115,19 @@ class ToolAdtMap(Base):
     tool = relationship("Tools", back_populates="tool_adt_maps")
     taxonomy_verb = relationship("TaxonomyVerbs", back_populates="tool_adt_maps")
 
+class Content(Base):
+    __tablename__ = 'content'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    subject = Column(String(10), nullable=True)
+    topic = Column(String(25), nullable=True)
+    subtitle = Column(String(50), nullable=True)
+    title = Column(String(100), nullable=True)
+    keywords = Column(String(400), nullable=True)
+    url = Column(String(100), nullable=True)
+
 # ------------------------------
-# 요청 데이터 모델
+# 요청 데이터 모델 --> Spring에서 받아오는 데이터터
 # ------------------------------
 class RequestData(BaseModel):
     grade: str
@@ -82,11 +143,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-# ------------------------------
-# Sentence-BERT 모델 로딩 (서버 시작 시 1회)
-# ------------------------------
-model = SentenceTransformer("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
 
 # ------------------------------
 # ADT 항목 DB에서 가져오기
@@ -115,7 +171,7 @@ def get_adt_items(db: Session):
     ]
 
 # ------------------------------
-# ADT기준 tool 가져오기기
+# ADT기준 tool 가져오기
 # ------------------------------
 
 def get_tools(db: Session, adt_values: list):
@@ -138,6 +194,83 @@ def get_tools(db: Session, adt_values: list):
         }
         for tool_name, tool_description in results
     ]
+# ------------------------------
+# 콘텐츠 유사도 분석 함수
+# ------------------------------
+# 과목 매핑 테이블
+subject_map = {
+    "국어": None, "수학": None, "바른 생활": None, "슬기로운 생활": None, "즐거운 생활": None,
+    "사회": "사회", "도덕": "사회", "역사": "사회",
+    "과학": "과학", "과학/기술": "과학",
+    "가정/정보": "기술·가정·실과", "기가/정보": "기술·가정·실과", "기술가정/정보": "기술·가정·실과",
+    "기술·가정·실과": "기술·가정·실과", "체육": "체육",
+    "예술": None, "음악": "음악", "미술": "미술", "예술(음악/미술)": "음악",
+    "영어": None, "한국사": "사회", "제2외국어/한문": None
+}
+
+def recommend_learning_content(
+    input_learning_objective: str,
+    user_subject: str,
+    model,
+    content_df,
+    content_embeddings,
+    top_n: int = 3,
+    threshold: float = 0.5
+):
+    # 설명
+    """
+    사용자의 학습 목표 문장과 과목명을 기반으로 관련 콘텐츠 추천
+    - input_learning_objective: 사용자 입력 문장
+    - user_subject: '가정/정보'와 같은 실제 사용자 입력
+    - model: SBERT 모델
+    - content_df: 전체 콘텐츠 DataFrame
+    - content_embeddings: SBERT 임베딩된 벡터 (Tensor)
+    - top_n: 추천 개수
+    - threshold: 유사도 기준 (기본 0.5 이상만 추천)
+
+    Returns: 추천 결과 리스트 or 에러 메시지 dict
+    """
+
+    # 과목 매핑
+    mapped_subject = subject_map.get(user_subject)
+    if not mapped_subject:
+        return {"message": f"'{user_subject}' 과목은 콘텐츠 DB에 존재하지 않거나 매핑할 수 없습니다."}
+
+    # 과목 필터링
+    filtered_df = content_df[content_df["subject"] == mapped_subject].copy()
+    if filtered_df.empty:
+        return {"message": f"매핑된 과목 '{mapped_subject}'에 해당하는 콘텐츠가 없습니다."}
+
+    # 입력 문장 벡터화
+    input_embedding = model.encode(input_learning_objective, convert_to_tensor=True)
+
+    # 임베딩 슬라이싱 (Tensor 기반)
+    filtered_embeddings = content_embeddings[filtered_df.index.tolist()]
+
+    # 코사인 유사도 계산
+    similarities = util.cos_sim(input_embedding, filtered_embeddings)[0]
+    filtered_df["Similarity"] = similarities.cpu().numpy()
+
+    # 유사도 기준 이상 콘텐츠 상위 N개 정렬
+    top_contents = filtered_df[filtered_df["Similarity"] >= threshold] \
+        .sort_values(by="Similarity", ascending=False).head(top_n)
+
+    if top_contents.empty:
+        return {"message": f"유사한 콘텐츠가 없습니다. (유사도 {threshold} 이상 없음)"}
+
+    # 결과 포맷 구성
+    return [
+        {
+            "topic": row["topic"],
+            "subtitle": row["subtitle"].strip(),
+            "title": row["title"],
+            "url": row["url"],
+            "similarity": round(row["Similarity"], 4)
+        }
+        for _, row in top_contents.iterrows()
+    ]
+
+
 
 # ------------------------------
 # 유사도 분석 함수
@@ -168,51 +301,13 @@ def find_similar_adts(user_input: str, adt_items: list, top_n: int = 3):
 @app.post("/submit/")
 def generate_similar_adts(req: RequestData, db: Session = Depends(get_db)):
 
-
-        # 임시 데이터
-    # goal = "동물의 생식 과정을 이해하고, 수정과 발생의 원리를 설명할 수 있다.";
-    # subject = "과학";
-    # grade = "고1";
-    # tools = ["Canva", "Padlet"]
-    # results = [
-    #     {'BloomTaxonomy': 'Understanding', 'ADT': '예증하기', 'ADTDesc': '예시를 통해 개념을 구체화하는 활동'},
-    #     {'BloomTaxonomy': 'Applying', 'ADT': '사용하기', 'ADTDesc': '적절한 도구나 개념을 실제 상황에 적용하는 활동'},
-    #     {'BloomTaxonomy': 'Analyzing', 'ADT': '구분하기', 'ADTDesc': '요소를 분리하고 비교하는 활동'}
-    # ]
-    # content = {
-    #     'topic': '생식',
-    #     'subtitle': '동물의 생식 세포와 수정 과정을 알아보자',
-    #     'title': '동물의 수정과 발생',
-    #     'url': 'https://www.edunet.net/contsMvGllry/view/154/18573'
-    # }
-#     prompt = f"""
-# Use a decision tree to explore the best activity options.
-
-# Start from: Learning goal → ADT → Tool → Content  
-# Then generate 3 final activities and return them in JSON.
-
-# All values in the JSON must be written in Korean.
-
-# ## Subject: {subject}
-# ## Grade: {grade}
-# ## Learning Objective: {goal}
-# ## ADT: {results[0]['ADT']} ({results[0]['ADTDesc']})
-# ## Tools: {tools}
-# ## Content: {content['title']} ({content['url']})
-# """
-
-
-
-
-
-
-
-
     adt_items = get_adt_items(db)
     results = find_similar_adts(req.goal.strip(), adt_items)
     
     adtList = [result["ADT"] for result in results]
     tools = get_tools(db, adtList) # tool 가져옴
+
+    contentResults = recommend_learning_content(req.goal.strip(), req.subject, model, content_df, content_embeddings)
 
 
     prompt = f"""
@@ -253,9 +348,34 @@ Always return output in the following format:
         max_output_tokens=2048,
         top_p=1
     )
-    logging.info(f"Response: {response.output_text}")
-    return response.output_text 
 
+    try:
+        parsed_output = json.loads(response.output_text)  # GPT 응답 파싱
+
+        # ✅ SBERT 추천 결과 호출
+        contentResults = recommend_learning_content(
+            input_learning_objective=req.goal.strip(),
+            user_subject=req.subject,
+            model=model,
+            content_df=content_df,
+            content_embeddings=content_embeddings
+        )
+
+        if isinstance(contentResults, dict) and "message" in contentResults:
+            return JSONResponse(content={
+                "gptResults": parsed_output,
+                "contentError": contentResults["message"]
+            })
+
+        # ✅ 두 결과를 합쳐서 응답
+        return JSONResponse(content={
+            "gptResults": parsed_output,
+            "contentResults": contentResults
+        })
+
+    except json.JSONDecodeError as e:
+        logging.error("JSON 파싱 실패", exc_info=True)
+        return JSONResponse(status_code=500, content={"error": "OpenAI 응답 파싱 오류"})
 
     
     
