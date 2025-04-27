@@ -71,7 +71,7 @@ public class ApiSearchController {
             }
             log.info("request: {}", request);
 
-            String fastApiUrl = "http://127.0.0.1:8000/submit/";
+            String fastApiUrl = "http://localhost:8000/submit";
             ObjectMapper objectMapper = new ObjectMapper();
             String json = objectMapper.writeValueAsString(request);
             log.info("Generated JSON: {}", json);
@@ -136,12 +136,16 @@ public class ApiSearchController {
     public ResponseEntity<ApiResponse<String>> saveActivity(@RequestBody SaveActivityDTO saveActivityDTO) {
         try {
             boolean flag = searchService.saveActivity(saveActivityDTO);
+            log.info("활동 저장 들어옴");
             if(flag){
+                log.info("활동 저장 성공");
                 return ResponseEntity.ok(ApiResponse.ok("활동 저장 성공"));
             } else {
+                log.info("활동 저장 실패");
                 return ResponseEntity.badRequest().body(ApiResponse.fail("활동 저장 실패"));
             }
         } catch(Exception e){
+            log.info("활동 저장 중 catch에 걸림");
             log.error("활동 저장 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.fail("서버 내부 오류가 발생했습니다"));

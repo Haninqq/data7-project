@@ -7,6 +7,8 @@ import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,8 +16,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 @Log4j2
 public class SavedGoalsDTO {
     private int id;
+    private String userId;
     private String grade;
     private String subject;
     private String goal;
-    private DateTimeFormat createdAt;
+    private LocalDateTime createdAt;
 }

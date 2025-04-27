@@ -18,6 +18,13 @@
             transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
+        #toolDesc{
+            font-family: 'Pretendard', sans-serif;
+        }
+        .pretendard{
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -33,21 +40,37 @@
                      style="max-height: 150px;">
             </div>
 
-            <!-- 이름 & 설명 (오른쪽) -->
-            <div class="col-md-9 d-flex flex-column justify-content-center" style="height: 150px; position: relative;">
+            <!-- 이름, 설명, 버튼 (오른쪽) -->
+            <div class="col-md-9 d-flex flex-column justify-content-center" style="height: 150px;">
 
-                <!-- 오른쪽 상단에 버튼 -->
-                <a href="/tools/list" class="btn btn-sm btn-outline-secondary position-absolute end-0 top-0">
-                    목록으로
-                </a>
+                <!-- 툴 이름 + '목록으로' 버튼 수평 정렬 -->
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h2 class="fw-bold mb-0" th:text="${tool.name}">툴 이름</h2>
+                    <a href="/tools/list" class="btn btn-sm btn-outline-secondary">
+                        목록으로
+                    </a>
+                </div>
 
-                <h2 class="fw-bold" th:text="${tool.name}">툴 이름</h2>
-                <p class="lead mb-0" th:text="${tool.description}">툴 설명</p>
+                <!-- 툴 설명 -->
+                <p class="lead mb-2" id="toolDesc" th:text="${tool.description}">툴 설명</p>
+
+                <!-- 공식 사이트 버튼 -->
+                <div>
+                    <a th:href="${tool.url}" target="_blank" class="btn btn-dark btn-sm d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        공식 사이트 바로가기
+                    </a>
+                </div>
+
             </div>
         </div>
 
+        <!-- Bootstrap Icons 링크 필요 -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+
         <hr>
-        <p>사용 방법</p>
+        <p class="pretendard">사용 방법</p>
         <!-- YouTube 영상 영역 -->
         <div class="row mb-4">
             <div class="col-md-4 mb-3" th:each="link : ${tool.youtubeLinks}">
@@ -56,7 +79,7 @@
                 </div>
             </div>
         </div>
-        <p>유사한 툴 목록</p>
+        <p class="pretendard">유사한 툴 목록</p>
         <!-- 관련된 다른 툴 로고 -->
         <div class="container" style="margin-bottom:50px;">
             <div class="d-flex flex-wrap gap-3">

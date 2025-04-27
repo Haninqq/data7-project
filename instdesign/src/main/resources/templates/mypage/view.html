@@ -1,116 +1,174 @@
 <!DOCTYPE html>
-<html lang="ko"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultrag.net.nz/thymeleaf/layout"
-      layout:decorate="~{main/index}">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultrag.net.nz/thymeleaf/layout" layout:decorate="~{main/index}">
 <head>
     <meta charset="UTF-8">
-    <title>제목을 입력해주세요</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <title>마이페이지 - 학습목표 결과</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <style>
         body {
             font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
             background-color: #f8f9fa;
         }
-        .card {
-            transition: transform 0.3s ease;
+        .summary-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
         }
 
-        .card:hover {
-            transform: translateY(0px);
-            box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-        }
-         #savedGoalsContainer {
-             scroll-behavior: smooth;
-         }
-        #savedGoalsContainer .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-        }
-        .text-ellipsis {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-         .shadow-left,
-         .shadow-right {
-             position: absolute;
-             top: 0;
-             width: 30px;
-             height: 100%;
-             z-index: 5;
-             pointer-events: none;
-         }
-
-        .shadow-left {
-            left: 0;
-            background: linear-gradient(to right, rgba(0, 0, 0, 0.01), transparent);
+        .summary-card h4 {
+            font-weight: 800;
         }
 
-        .shadow-right {
-            right: 0;
-            background: linear-gradient(to left, rgba(0, 0, 0, 0.01), transparent);
+        .summary-card p {
+            margin-bottom: 0;
+        }
+        .summary-item {
+            margin-bottom: 20px;
+        }
+        .activity-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 24px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .activity-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .activity-desc {
+            font-size: 0.95rem;
+            color: #555;
+        }
+        .tool-logo {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
+        #toolSection:hover{
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
         }
     </style>
 </head>
+
 <body>
 <div layout:fragment="content">
     <div class="container my-5">
-        <!-- 마이페이지 헤더 -->
-        <div class="mb-4">
-            <h2 class="fw-bold">마이페이지</h2>
-            <p class="text-muted">내 계정 정보를 확인하고 관리할 수 있습니다.</p>
-        </div>
 
-        <!-- 프로필 카드 -->
-        <div class="card mb-4">
-            <div class="card-body d-flex align-items-center">
-                <div>
-                    <h5 class="card-title mb-1" th:text="${session.user.name}">홍길동</h5>
-                    <p class="card-text mb-0 text-muted" th:text="${session.user.email}">hong@example.com</p>
+        <!-- 수정된 상단 카드 -->
+        <div class="summary-card mb-5 p-4">
+            <div class="row g-4">
+                <!-- 과목명과 학습 목표 -->
+                <div class="col-12">
+                    <h6 class="text-muted mb-1">과목명</h6>
+                    <h4 class="fw-bold text-primary" th:text="${goal.subject}">과목명</h4>
+                </div>
+                <div class="col-12">
+                    <h6 class="text-muted mb-1">학습 목표</h6>
+                    <p class="fw-semibold fs-5" th:text="${goal.goal}" style="line-height: 1.5;">학습 목표 문구</p>
+                </div>
+
+                <!-- 학년과 생성일 -->
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-1">학년</h6>
+                    <p class="fw-semibold" th:text="${goal.grade}">학년</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-1">생성일</h6>
+                    <p class="fw-semibold" th:text="${#temporals.format(goal.createdAt, 'yyyy-MM-dd')}">생성일</p>
                 </div>
             </div>
         </div>
 
-        <!-- 활동 요약 (saved_goal 카드 나열) -->
+        <!-- 저장한 콘텐츠 -->
         <div class="container my-5">
-            <div class="mb-4">
-                <h4 class="fw-bold mb-3">저장한 학습 목표</h4>
-            </div>
-            <div class="position-relative">
-                <div id="savedGoalsContainer" class="d-flex flex-column overflow-y-auto py-4 px-2" style="gap: 1rem; max-height: 600px;">
-                    <div class="card shadow rounded-4"
-                         th:each="list : ${goalsList}"
-                         th:onclick="|location.href='/mypage/results/' + ${list.id}|"
-                         style="cursor: pointer; transition: transform 0.2s;">
-                        <div class="card-body d-flex flex-column justify-content-between">
+            <div class="mb-5">
+                <h5 class="fw-bold mb-3">저장한 콘텐츠</h5>
+
+                <div id="contentContainer" class="d-flex flex-wrap gap-3 w-100">
+                    <!-- 콘텐츠가 있을 때 -->
+                    <div class="card flex-grow-1" style="min-width: 250px; max-width: 33%;"
+                         th:each="content : ${contentList}">
+                        <div class="card-body d-flex flex-column justify-content-between h-100">
                             <div>
-                                <h6 class="card-subtitle mb-2 text-muted">학습 목표</h6>
-                                <h5 class="card-title mb-2 text-ellipsis" th:text="${list.goal}">학습 목표 문구</h5>
-                                <div class="badge-container mb-2">
-                                    <span class="badge bg-primary me-1" th:text="${list.grade}">학년</span>
-                                    <span class="badge bg-success" th:text="${list.subject}">과목</span>
-                                </div>
+                                <h6 class="card-subtitle text-muted mb-2" th:text="${content.topic}">토픽</h6>
+                                <h5 class="card-title fw-bold mb-2" style="font-size: 1.05rem;" th:text="${content.title}">제목</h5>
+                                <p class="card-text text-muted" th:text="${content.subtitle}" style="font-size: 0.9rem;">소제목</p>
                             </div>
-                            <div class="text-end mt-3">
-                                <small class="text-muted" th:text="${#dates.format(list.createdAt, 'yyyy-MM-dd')}">2024-04-30</small>
+                            <div class="mt-3 d-flex flex-column align-items-end">
+                                <a th:href="${content.url}" target="_blank" class="btn btn-primary btn-sm w-100 mb-2">에듀넷 바로가기</a>
+                                <small class="text-muted" th:text="|유사도: ${#numbers.formatDecimal(content.similarity * 100, 0, 0)}%|">유사도</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 콘텐츠가 없을 때 -->
+                    <div th:if="${contentList == null or contentList.isEmpty()}" class="w-100 text-center text-muted py-5">
+                        저장한 콘텐츠가 없습니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <!-- 저장한 활동 -->
+        <div class="mb-5">
+            <h5 class="fw-bold mb-3">저장한 활동</h5>
+
+            <div class="row row-cols-1 g-4">
+                <!-- 활동이 있을 때 -->
+                <div class="col" th:each="activity : ${activityList}">
+                    <div class="activity-card d-flex flex-column flex-md-row align-items-stretch">
+                        <!-- 왼쪽 툴 로고 및 이름 -->
+                        <div class="d-flex flex-column align-items-center justify-content-center pe-3"
+                             th:attr="data-tool-id=${activity.toolId}"
+                             style="min-width: 200px; cursor: pointer;">
+                            <div class="border rounded-4 p-2 w-100 d-flex flex-column align-items-center" id="toolSection" style="height: 100%">
+                                <div class="d-flex justify-content-center align-items-center mb-2" style="width: 100%; height: 100px;">
+                                    <img th:src="@{/image/{id}.png(id=${activity.toolId})}" alt="Tool Logo" class="tool-logo">
+                                </div>
+                                <div class="fw-semibold text-center" th:text="${activity.toolName}">툴 이름</div>
+                            </div>
+                        </div>
+
+                        <!-- 오른쪽 활동 문장 및 설명 -->
+                        <div class="flex-grow-1 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="fw-bold fs-5 mb-2" th:text="${activity.activitySentence}">활동 문장</div>
+                                <div class="border rounded-4 p-3" th:text="${activity.activityDesc}">활동 설명</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- shadow-left, shadow-right는 필요 없어지므로 지워도 됨 -->
+
+                <!-- 활동이 없을 때 -->
+                <div th:if="${activityList == null or activityList.isEmpty()}" class="w-100 text-center text-muted py-5">
+                    저장한 활동이 없습니다.
+                </div>
             </div>
         </div>
 
 
-        <!-- 계정 관리 메뉴 -->
-        <div class="list-group">
-            <a href="#" class="list-group-item list-group-item-action">내 정보 수정(MVP | 추후개발예정)</a>
-            <a href="#" class="list-group-item list-group-item-action">비밀번호 변경(MVP | 추후개발예정)</a>
-            <a href="/auth/logout" class="list-group-item list-group-item-action text-danger">로그아웃</a>
-        </div>
     </div>
+
+    <!-- 클릭 시 tool 상세 페이지로 이동 -->
+    <script>
+        document.addEventListener('click', function (e) {
+            const target = e.target.closest('[data-tool-id]');
+            if (target) {
+                const toolId = target.dataset.toolId;
+                window.open('/tools/view/' + toolId);
+            }
+        });
+    </script>
+
 </div>
 </body>
 </html>
