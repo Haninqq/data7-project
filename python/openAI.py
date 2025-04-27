@@ -224,7 +224,7 @@ def recommend_learning_content(
     top_n: int = 3,
     threshold: float = 0.5
 ):
-    # 설명
+    # description
     """
     사용자의 학습 목표 문장과 과목명을 기반으로 관련 콘텐츠 추천
     - input_learning_objective: 사용자 입력 문장
@@ -305,7 +305,7 @@ def find_similar_adts(user_input: str, adt_items: list, top_n: int = 3):
 # ------------------------------
 # 라우터 정의
 # ------------------------------
-@app.post("/submit/")
+@app.post("/submit")
 def generate_similar_adts(req: RequestData, db: Session = Depends(get_db)):
 
     adt_items = get_adt_items(db)
@@ -318,7 +318,7 @@ def generate_similar_adts(req: RequestData, db: Session = Depends(get_db)):
 
 
     prompt = f"""
-You must always use the following instructional context when generating learning activities.
+You must generate learning activities based on the instructional information provided in each user input.
 
 ### Instructional Info:
 - Subject: {req.subject}
@@ -332,10 +332,59 @@ You must always use the following instructional context when generating learning
 
 ### Tool List: {tools}
 
+--- 
+
+You are tasked with creating digital learning activities based on the given instructional info, cognitive elements, and tool list.
+
+Here are two examples:
+
+Example 1:
+{{
+"activity_title": "기후 데이터 분석",
+"tool_name": "네이버 datalab",
+"activity_desc": "학생들은 네이버 datalab에 접속하여 지역별 기온, 강수량, 기후 변화 데이터를 검색한다. 검색한 데이터를 바탕으로 각 조별로 특정 지역을 선정하고, 기온 및 강수량 변화를 표로 정리한다. 조별로 정리한 데이터를 분석하여 해당 지역의 기후 변화 특성과 생물 다양성에 미치는 영향을 토의한다. 마지막으로 분석 결과를 발표 자료로 정리하여 전체 앞에서 발표하고, 지역 간 기후 차이와 생물 다양성 문제를 종합적으로 논의한다.",
+"activity_sentence": "네이버 datalab을 활용하여 기후 데이터 분석을 해본다."
+}}
+
+Example 2:
+{{
+"activity_title": "위성 지도 생물 관찰",
+"tool_name": "구글어스",
+"activity_desc": "학생들은 구글어스를 이용해 학교 주변 또는 관심 지역을 탐색한다. 탐색한 지역의 주요 지형적 특성을 조사하고, 그 지역에 서식하는 생물 종을 검색하여 정리한다. 이후 지형과 생물 분포의 관계를 분석하여 구글어스 지도 위에 표시하고, 조별로 포스터를 제작해 지역별 생물 다양성의 특징을 설명한다. 제작한 포스터를 바탕으로 조별 발표를 진행한다.",
+"activity_sentence": "구글어스를 활용하여 위성 지도 생물 관찰을 해본다."
+}}
+
+Now, based on the provided instructional information, cognitive elements, and tool list, generate 3 new and distinct activities.
+
+Each activity_desc must describe the activity in a natural, detailed, step-by-step manner without explicitly numbering steps, so that teachers can immediately apply it in a real classroom setting.
+
+Follow the output rules and format.
+"""
+
+
+
+    
+
+
+    
+    instruction = f"""
+You must always follow the output Rules and output format when generating learning activities.
+
+### Output Rules:
+You must follow these rules:
+1. Generate exactly 3 distinct digital learning activities.
+2. For each activity, select exactly one appropriate tool from the given tool list.
+3. Output must be in JSON format.
+4. Each JSON object must include the following keys: activity_title, tool_name, activity_desc, activity_sentence.
+5. All values must be written in Korean.
+6. Do not include any extra explanation or commentary outside of the JSON array.
+7. Do not use quotation marks (" ") or apostrophes (' ') inside any field values.
+
 Always return output in the following format:
 
 ### Output Format (in Korean):
-[{{
+[
+{{
     "activity_title": "",
     "tool_name": "",
     "activity_desc": "",
@@ -343,14 +392,13 @@ Always return output in the following format:
 }},
 ...
 ]
-
-
 """
 
     # GPT-4o-mini 호출
     response = client.responses.create(
         model="gpt-4.1",
         input=prompt,
+        instructions=instruction,
         temperature=1,
         max_output_tokens=2048,
         top_p=1
