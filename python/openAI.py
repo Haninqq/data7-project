@@ -30,7 +30,7 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))  
 
 # DB 설정
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:1234@localhost/instdesign"
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:1234@mariadb/instdesign"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"charset": "utf8mb4"})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
