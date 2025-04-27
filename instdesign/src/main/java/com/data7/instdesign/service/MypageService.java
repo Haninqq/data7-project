@@ -1,6 +1,8 @@
 package com.data7.instdesign.service;
 
 import com.data7.instdesign.dto.mypage.SavedGoalsDTO;
+import com.data7.instdesign.dto.search.SaveActivityDTO;
+import com.data7.instdesign.dto.search.SaveContentDTO;
 import com.data7.instdesign.dto.tools.ToolsDTO;
 import com.data7.instdesign.mapper.MypageMapper;
 import com.data7.instdesign.mapper.SearchMapper;
@@ -45,4 +47,27 @@ public class MypageService {
             default -> "알 수 없음";
         };
     }
+    public List<SaveContentDTO> getContents(String goalId) {
+        return mypageMapper.getContents(goalId);
+    }
+    public List<SaveActivityDTO> getActivities(String goalId) {
+        return mypageMapper.getActivities(goalId);
+    }
+    public SavedGoalsDTO getSavedGoals(String goalId) {
+        return mypageMapper.getSavedGoals(goalId);
+    }
+    public boolean deleteGoal(String goalId, String userId) {
+        SavedGoalsDTO goal = mypageMapper.findGoalById(goalId);
+
+        if (goal == null) {
+            return false;
+        }
+
+        if (!goal.getUserId().equals(userId)) {
+            return false;
+        }
+
+        return mypageMapper.deleteGoal(goalId);
+    }
+
 }

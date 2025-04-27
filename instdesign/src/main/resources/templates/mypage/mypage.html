@@ -60,7 +60,7 @@
         <!-- 마이페이지 헤더 -->
         <div class="mb-4">
             <h2 class="fw-bold">마이페이지</h2>
-            <p class="text-muted">내 계정 정보를 확인하고 관리할 수 있습니다.</p>
+            <p class="text-muted">내가 입력한 학습 목표를 기반으로 저장한 콘텐츠와 활동을 확인할 수 있습니다.</p>
         </div>
 
         <!-- 프로필 카드 -->
@@ -76,33 +76,50 @@
         <!-- 활동 요약 (saved_goal 카드 나열) -->
         <div class="container my-5">
             <div class="mb-4">
-                <h4 class="fw-bold mb-3">저장한 학습 목표</h4>
+                <h4 class="fw-bold mb-3">나의 학습 목표 목록</h4>
             </div>
             <div class="position-relative">
-                <div id="savedGoalsContainer" class="d-flex overflow-auto py-4 px-2" style="white-space: nowrap; gap: 1rem;">
-                    <div class="card shadow rounded-4 me-4 h-100"
+                <div id="savedGoalsContainer" class="d-flex flex-column overflow-y-auto py-4 px-2" style="gap: 1rem; max-height: 600px;">
+                    <div class="card shadow-sm rounded-4 p-3"
                          th:each="list : ${goalsList}"
-                         th:onclick="|location.href='/mypage/results/' + ${list.id}|"
-                         style="min-width: 20rem; cursor: pointer; transition: transform 0.2s;">
-                        <div class="card-body d-flex flex-column justify-content-between">
-                            <div>
-                                <h6 class="card-subtitle mb-2 text-muted">학습 목표</h6>
-                                <h5 class="card-title mb-2 text-ellipsis" th:text="${list.goal}">학습 목표 문구</h5>
-                                <div class="badge-container mb-2">
-                                    <span class="badge bg-primary me-1" th:text="${list.grade}">학년</span>
-                                    <span class="badge bg-success" th:text="${list.subject}">과목</span>
+                         style="cursor: pointer; transition: transform 0.2s;"
+                         th:onclick="|location.href='/mypage/results/' + ${list.id}|">
+
+                        <div class="card-body p-2 d-flex flex-column justify-content-between" style="height: 100%;">
+
+                            <!-- 제목 + 삭제 버튼 수평 정렬 -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="card-title fw-semibold mb-0" style="font-size: 1.05rem; line-height: 1.4;" th:text="${list.goal}">
+                                    학습 목표 문구
+                                </h5>
+
+                                <!-- 삭제 버튼 -->
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger"
+                                        th:onclick="|event.stopPropagation(); confirmDelete(${list.id})|">
+                                    삭제
+                                </button>
+                            </div>
+
+                            <!-- 학습 목표 소제목 -->
+                            <h6 class="card-subtitle mb-1 text-muted small">학습 목표</h6>
+
+                            <!-- 학년, 과목, 생성일 -->
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div class="d-flex flex-wrap gap-1">
+                                    <span class="badge bg-primary" style="font-size: 0.75rem;" th:text="${list.grade}">학년</span>
+                                    <span class="badge bg-success" style="font-size: 0.75rem;" th:text="${list.subject}">과목</span>
                                 </div>
+                                <small class="text-muted" th:text="${#temporals.format(list.createdAt, 'yyyy-MM-dd')}">2024-04-30</small>
                             </div>
-                            <div class="text-end mt-3">
-                                <small class="text-muted" th:text="${#dates.format(list.createdAt, 'yyyy-MM-dd')}">2024-04-30</small>
-                            </div>
+
                         </div>
                     </div>
-                </div>
-                <div class="shadow-left"></div>
-                <div class="shadow-right"></div>
-            </div>
 
+
+
+                </div>
+            </div>
         </div>
 
 
@@ -113,6 +130,36 @@
             <a href="/auth/logout" class="list-group-item list-group-item-action text-danger">로그아웃</a>
         </div>
     </div>
+    <script>
+        async function confirmDelete(id) {
+            if (!confirm('정말로 삭제하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/mypage/delete/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.data);  // "삭제 성공"
+                    location.reload();
+                } else {
+                    alert(data.message);  // "삭제 실패"
+                }
+            } catch (error) {
+                console.error(error);
+                alert('오류가 발생했습니다.');
+            }
+        }
+
+    </script>
+
 </div>
 </body>
 </html>

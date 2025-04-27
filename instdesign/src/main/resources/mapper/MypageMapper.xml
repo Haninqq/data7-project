@@ -7,4 +7,25 @@
         WHERE userId = #{userId}
         ORDER BY createdAt desc
     </select>
+    <select id="getContents" resultType="com.data7.instdesign.dto.search.SaveContentDTO">
+        SELECT * FROM saved_contents
+        WHERE goalId = #{goalId}
+    </select>
+    <select id="getActivities" resultType="com.data7.instdesign.dto.search.SaveActivityDTO">
+        SELECT * FROM saved_activities
+        WHERE goalId = #{goalId}
+    </select>
+    <select id="getSavedGoals" resultType="com.data7.instdesign.dto.mypage.SavedGoalsDTO">
+        SELECT * FROM saved_goal
+        WHERE id = #{goalId}
+    </select>
+    <select id="findGoalById" resultType="com.data7.instdesign.dto.mypage.SavedGoalsDTO">
+        SELECT id, userId, goal, grade, subject, createdAt
+        FROM saved_goal
+        WHERE id = #{goalId}
+    </select>
+    <delete id="deleteGoal">
+        DELETE FROM saved_goal
+        WHERE id = #{goalId}
+    </delete>
 </mapper>
