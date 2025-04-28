@@ -400,7 +400,7 @@ Always return output in the following format:
         model="gpt-4.1",
         input=prompt,
         instructions=instruction,
-        temperature=1,
+        temperature=0.4,
         max_output_tokens=2048,
         top_p=1
     )
